@@ -28,6 +28,8 @@ if (isset($_GET['error'])) {
         $error = "Administrative privileges are required to access that feature.";
     } elseif ($_GET['error'] === 'no_room') {
         $error = "Your account is not assigned to a valid room. Please contact reception.";
+    } elseif ($_GET['error'] === 'session') {
+        $error = "Your session has expired or was ended. Please sign in again.";
     }
 }
 
@@ -58,23 +60,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if (empty($identifier) || empty($password)) {
             $error = "Please enter both your room number/email and password.";
         } elseif ($conn === false) {
-            $error = "Database connection error. Please verify SQL Server is running and smartscent_db is created.";
+            $error = "Database service is currently unavailable. Please contact an administrator.";
         } else {
             // Parameterized query matching email OR room_number
-            $sql = "SELECT id, email, password, role, full_name, is_active, room_number 
-                    FROM userlogin 
+            $sql = "SELECT id, email, password, role, full_name, is_active, room_number
+                    FROM userlogin
                     WHERE email = ? OR room_number = ?";
             $params = [$identifier, $identifier];
             $stmt = @sqlsrv_query($conn, $sql, $params);
 
             if ($stmt !== false) {
                 $row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
+                sqlsrv_free_stmt($stmt);
 
                 if ($row) {
                     if ((int)$row['is_active'] !== 1) {
                         $error = "This account is currently deactivated. Please contact an administrator.";
                     } elseif (verifyPassword($password, $row['password'], (int)$row['id'], $conn)) {
-                        // Reset failed attempts
                         unset($_SESSION['failed_login_attempts'], $_SESSION['lockout_time']);
 
                         // Regenerate session ID for security
@@ -85,11 +87,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         $_SESSION['smartscent_role']     = strtolower($row['role']);
                         $_SESSION['smartscent_fullname'] = $row['full_name'] ?? 'SmartScent User';
                         $_SESSION['smartscent_room']     = $row['room_number'] ?? null;
+                        $_SESSION['last_activity']       = time();
+                        $_SESSION['last_active_check']   = time();
+                        csrfToken();
 
                         header("Location: index.php");
                         exit();
                     } else {
-                        // Generic error for wrong credentials
                         $_SESSION['failed_login_attempts'] = ($_SESSION['failed_login_attempts'] ?? 0) + 1;
                         if ($_SESSION['failed_login_attempts'] >= 5) {
                             $_SESSION['lockout_time'] = time() + $lockoutDuration;
@@ -99,7 +103,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         }
                     }
                 } else {
-                    // Generic error to avoid account enumeration
                     $_SESSION['failed_login_attempts'] = ($_SESSION['failed_login_attempts'] ?? 0) + 1;
                     if ($_SESSION['failed_login_attempts'] >= 5) {
                         $_SESSION['lockout_time'] = time() + $lockoutDuration;
@@ -109,13 +112,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     }
                 }
             } else {
-                $error = "Query failed. Please ensure the 'userlogin' table exists in smartscent_db.";
+                $error = "Authentication service error. Please contact an administrator.";
             }
         }
     }
 }
 
-// Prefill identifier from POST or QR room parameter
 $prefilledIdentifier = $submittedIdentifier !== '' ? $submittedIdentifier : $room;
 ?>
 <!DOCTYPE html>
@@ -124,7 +126,8 @@ $prefilledIdentifier = $submittedIdentifier !== '' ? $submittedIdentifier : $roo
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SmartScent — Sign In</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/inter.css">
+  <link rel="stylesheet" href="assets/fontawesome.css">
   <link rel="stylesheet" href="login.css">
 </head>
 <body class="login-page">
@@ -147,14 +150,14 @@ $prefilledIdentifier = $submittedIdentifier !== '' ? $submittedIdentifier : $roo
     </div>
 
     <?php if (!empty($error)): ?>
-      <div class="login-alert alert-error">
+      <div class="login-alert alert-error" role="alert">
         <i class="fa-solid fa-circle-exclamation"></i>
         <span><?= htmlspecialchars($error) ?></span>
       </div>
     <?php endif; ?>
 
     <?php if (!empty($infoMsg)): ?>
-      <div class="login-alert alert-info">
+      <div class="login-alert alert-info" role="status">
         <i class="fa-solid fa-circle-check"></i>
         <span><?= htmlspecialchars($infoMsg) ?></span>
       </div>
@@ -165,12 +168,12 @@ $prefilledIdentifier = $submittedIdentifier !== '' ? $submittedIdentifier : $roo
         <label class="form-label" for="identifier">Email or Room Number</label>
         <div class="input-wrapper">
           <i class="fa-solid fa-user input-icon"></i>
-          <input 
-            type="text" 
-            id="identifier" 
-            name="identifier" 
-            class="form-input" 
-            required 
+          <input
+            type="text"
+            id="identifier"
+            name="identifier"
+            class="form-input"
+            required
             placeholder="e.g. 101 or admin@smartscent.com"
             value="<?= htmlspecialchars($prefilledIdentifier) ?>"
             autocomplete="username"
@@ -182,12 +185,12 @@ $prefilledIdentifier = $submittedIdentifier !== '' ? $submittedIdentifier : $roo
         <label class="form-label" for="password">Password</label>
         <div class="input-wrapper">
           <i class="fa-solid fa-lock input-icon"></i>
-          <input 
-            type="password" 
-            id="password" 
-            name="password" 
-            class="form-input" 
-            required 
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-input"
+            required
             placeholder="••••••••"
             autocomplete="current-password"
           >
@@ -211,7 +214,6 @@ $prefilledIdentifier = $submittedIdentifier !== '' ? $submittedIdentifier : $roo
 </div>
 
 <script>
-  // Toggle password visibility
   const toggleBtn = document.getElementById('togglePassword');
   const passwordInput = document.getElementById('password');
   const toggleIcon = document.getElementById('toggleIcon');

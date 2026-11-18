@@ -1,0 +1,9 @@
+# Local secrets & per-device configuration
+firmware/ESP32S3_Fragrance_V2/config.h
+
+# Runtime telemetry cache & lock files
+cache/*.json
+cache/*.lock
+
+# Temporary test state files
+tools/mock_state*.json

@@ -1,0 +1,8 @@
+/* Self-hosted offline typography rules (no external Google Fonts CDN dependency) */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: local("Inter"), local("Inter Regular"), local("Segoe UI"), local("Roboto"), local("Helvetica Neue"), local("Arial");
+}

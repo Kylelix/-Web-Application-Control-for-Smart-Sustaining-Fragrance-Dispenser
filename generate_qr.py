@@ -18,21 +18,24 @@ def get_local_ip():
         s.close()
         return ip
     except Exception:
-        return "192.168.254.105" # change ip address for mobiles to connect 
+        return "192.168.1.10" # Fallback IPv4 if offline; replace with your laptop IPv4
 
-# -------------------------------------------------------------
-# Configuration: Auto-detects your laptop's Wi-Fi IP on port 8000
-# -------------------------------------------------------------
-PORT = 8000
+# -------------------------------------------------------------------------
+# Server Configuration (Must match your actual web server host/port/path!)
+#   * XAMPP Apache (recommended): PORT = 80,   BASE_PATH = "/smartscent"
+#   * PHP CLI server debug:       PORT = 8000, BASE_PATH = ""
+# -------------------------------------------------------------------------
+PORT = 80
+BASE_PATH = "/smartscent"
 SERVER_IP = get_local_ip()
-BASE_URL = f"http://{SERVER_IP}:{PORT}/login.php?room="
+PORT_PART = "" if PORT == 80 else f":{PORT}"
+BASE_URL = f"http://{SERVER_IP}{PORT_PART}{BASE_PATH}/login.php?room="
 ROOMS = ["101", "102"]
 
 def create_room_qr(room_number, output_filename):
     url = f"{BASE_URL}{room_number}"
     print(f"Generating QR for Room {room_number} -> {url}")
 
-    # Generate the base QR Code
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_M,
@@ -45,35 +48,26 @@ def create_room_qr(room_number, output_filename):
     qr_image = qr.make_image(fill_color="#102822", back_color="#ffffff").convert("RGB")
     qr_width, qr_height = qr_image.size
 
-    # Extra canvas space at bottom for text label and border
     label_height = 80
     border_padding = 24
     canvas_width = qr_width + (border_padding * 2)
     canvas_height = qr_height + label_height + (border_padding * 2)
 
-    # Create white canvas
     canvas = Image.new("RGB", (canvas_width, canvas_height), "#ffffff")
     draw = ImageDraw.Draw(canvas)
-
-    # Paste QR code centered
     canvas.paste(qr_image, (border_padding, border_padding))
 
-    # Draw room label text
     text = f"Room {room_number}"
     subtext = "SmartScent Guest Access"
 
     try:
-        # Try loading a system TrueType font for clean rendering
         font_large = ImageFont.truetype("arial.ttf", 28)
         font_small = ImageFont.truetype("arial.ttf", 16)
     except IOError:
-        # Fallback to default bitmap font if TTF not found
         font_large = ImageFont.load_default()
         font_small = ImageFont.load_default()
 
-    # Calculate centered text position
     try:
-        # Pillow >= 10.0 textbbox
         bbox_large = draw.textbbox((0, 0), text, font=font_large)
         text_w = bbox_large[2] - bbox_large[0]
         bbox_small = draw.textbbox((0, 0), subtext, font=font_small)
@@ -90,14 +84,12 @@ def create_room_qr(room_number, output_filename):
     sub_y = text_y + 34
     draw.text((sub_x, sub_y), subtext, fill="#687973", font=font_small)
 
-    # Subtle outer guide border for easy cutting/printing
     draw.rectangle(
         [(2, 2), (canvas_width - 3, canvas_height - 3)],
         outline="#dce5e1",
         width=2
     )
 
-    # Save final image (prints crisp at 4 to 5 cm)
     canvas.save(output_filename, dpi=(300, 300))
     print(f"Saved: {output_filename} ({canvas_width}x{canvas_height} px)")
 
@@ -108,7 +100,7 @@ def main():
     for room in ROOMS:
         out_file = os.path.join(script_dir, f"qr_room_{room}.png")
         create_room_qr(room, out_file)
-    print("\nAll QR codes generated successfully with active Wi-Fi IP!")
+    print("\nAll QR codes generated successfully!")
 
 if __name__ == "__main__":
     main()
