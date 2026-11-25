@@ -13,16 +13,27 @@ This guide walks you through setting up and testing the QR-based guest authentic
 
 ---
 
-### Step 2: Network & Firewall Setup
-1. Open PowerShell or Command Prompt and run:
+### Step 2: XAMPP Link, Network & Firewall Setup
+1. **Link your cloned folder to XAMPP `htdocs` (one-time per PC):**  
+   A Windows folder junction is local to each PC and is **not** synced by Git. Unless you cloned the project directly into `C:\xampp\htdocs\smartscent`, run this in **Command Prompt (`cmd`)** (prevents `404 Not Found` on `/smartscent/login.php`):
+   ```cmd
+   mklink /J "C:\xampp\htdocs\smartscent" "<FULL_PATH_TO_YOUR_CLONED_FOLDER>"
+   ```
+2. Open PowerShell or Command Prompt and run:
    ```cmd
    ipconfig
    ```
    Note your laptop's **IPv4 Address** on your Wi-Fi network (e.g., `192.168.1.10`).
-2. **Set a Static IP** on your laptop (or DHCP reservation in your router/mobile hotspot) so the IP address does not change between tests or after printing.
-3. **Allow Apache through Windows Firewall**:
-   - Serve the website with XAMPP Apache (port 80) and ensure Apache HTTP Server is allowed for Private networks in Windows Defender Firewall.
-4. Ensure your test mobile phone and the host laptop are connected to the **same Wi-Fi network** (or phone hotspot).
+3. **Set a Static IP** on your laptop (or DHCP reservation in your router/mobile hotspot) so the IP address does not change between tests or after printing.
+4. **Start Apache & allow Port 80 through Windows Firewall**:
+   - Open **XAMPP Control Panel** and start **Apache** (port 80).
+   - Ensure Apache HTTP Server is allowed for Private networks in Windows Defender Firewall, or run this once in **PowerShell as Administrator**:
+     ```powershell
+     New-NetFirewallRule -DisplayName "SmartScent HTTP 80" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow
+     ```
+5. Ensure your test mobile phone and the host laptop are connected to the **same Wi-Fi network** (or phone hotspot). You can also test manually in a browser before scanning:
+   - **Phone:** `http://<YOUR_LAPTOP_IP>/smartscent/login.php?room=101`
+   - **PC:** `http://localhost/smartscent/login.php?room=101`
 
 ---
 

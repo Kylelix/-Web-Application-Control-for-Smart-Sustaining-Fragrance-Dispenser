@@ -19,7 +19,15 @@ Browsers **never** contact the ESP32 directly. This guarantees server-side room/
 ---
 
 ## 2. Web Server Setup (Use XAMPP Apache)
-- **Important:** Serve the site with **XAMPP Apache** (multi-threaded) — copy or symlink this folder to `C:\xampp\htdocs\smartscent`.
+- **Important (One-time per PC):** Serve the site with **XAMPP Apache** (multi-threaded). Because Windows junctions are **not** synced by Git, every groupmate must run this once in **Command Prompt (`cmd`)** after cloning (unless cloned directly into `C:\xampp\htdocs\smartscent`):
+  ```cmd
+  mklink /J "C:\xampp\htdocs\smartscent" "<FULL_PATH_TO_YOUR_CLONED_FOLDER>"
+  ```
+- Open **XAMPP Control Panel** and start **Apache** (port `80`).
+- If phones on the same Wi-Fi cannot reach the site, allow Port `80` in **PowerShell (Admin)**:
+  ```powershell
+  New-NetFirewallRule -DisplayName "SmartScent HTTP 80" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow
+  ```
 - Single-threaded `php -S` on Windows blocks parallel browser requests if a device is offline or timing out. If you use `php -S` anyway for quick local debug, keep cURL timeouts short (already configured in `config.php`: 800 ms connect / 1500 ms total).
 - Remember to keep `PORT` and `BASE_PATH` in `qr/generate_qr.py` aligned with your real web server URL before generating printable QR cards.
 
