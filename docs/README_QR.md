@@ -5,8 +5,8 @@ This guide walks you through setting up and testing the QR-based guest authentic
 ---
 
 ### Step 1: Database Setup in SSMS
-1. If not already executed, run [`smartscent_db_setup.sql`](smartscent_db_setup.sql) in SQL Server Management Studio (SSMS).
-2. Open and execute [`qr_room_upgrade.sql`](qr_room_upgrade.sql) and [`hardware_integration_upgrade.sql`](hardware_integration_upgrade.sql) in SSMS:
+1. If not already executed, run [`sql/smartscent_db_setup.sql`](../sql/smartscent_db_setup.sql) in SQL Server Management Studio (SSMS).
+2. Open and execute [`sql/qr_room_upgrade.sql`](../sql/qr_room_upgrade.sql) and [`sql/hardware_integration_upgrade.sql`](../sql/hardware_integration_upgrade.sql) in SSMS:
    - Adds the `room_number` column, `devices` registry, and `activity_log` table.
    - Configures `client101@smartscent.com` (Room 101 -> `SFD-01`) and `client102@smartscent.com` (Room 102 -> `SFD-02`).
    - Deactivates unassigned observer accounts.
@@ -27,15 +27,15 @@ This guide walks you through setting up and testing the QR-based guest authentic
 ---
 
 ### Step 3: Generate QR Code Cards
-1. Open [`generate_qr.py`](generate_qr.py) and confirm `PORT` and `BASE_PATH` match how you host the site:
+1. Open [`qr/generate_qr.py`](../qr/generate_qr.py) and confirm `PORT` and `BASE_PATH` match how you host the site:
    - **XAMPP Apache (recommended)**: `PORT = 80`, `BASE_PATH = "/smartscent"` -> `http://<YOUR_LAPTOP_IP>/smartscent/login.php?room=`
    - **PHP Built-in Server (single-device debug only)**: `PORT = 8000`, `BASE_PATH = ""`
    *(The script auto-detects your active `SERVER_IP` via `get_local_ip()`.)*
 2. Run the generator script:
    ```cmd
-   python generate_qr.py
+   python qr/generate_qr.py
    ```
-3. Output images [`qr_room_101.png`](qr_room_101.png) and [`qr_room_102.png`](qr_room_102.png) will be created with room labels and print-ready dimensions (4 to 5 cm).
+3. Output images [`qr/qr_room_101.png`](../qr/qr_room_101.png) and [`qr/qr_room_102.png`](../qr/qr_room_102.png) will be created with room labels and print-ready dimensions (4 to 5 cm).
 
 ---
 

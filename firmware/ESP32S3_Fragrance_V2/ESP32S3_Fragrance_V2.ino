@@ -2,12 +2,12 @@
  * SmartScent Dispenser Firmware v2.0.0
  * Target MCU: ESP32-S3 DevKitC (Arduino-ESP32 Core 3.x)
  *
- * Hardware Mapping (verified against ESP32S3TestCode.ino):
- *   - GPIO2  : 108 kHz Atomizer PWM (8-bit, duty 128 = ON, 0 = OFF) via ledcAttach
- *   - GPIO3  : 5V Aspiration Fan (HIGH = ON, LOW = OFF)
- *   - GPIO1  : XKC-Y23A-NPN Water Level Sensor (INPUT_PULLUP, WATER_ACTIVE_LEVEL = liquid)
- *   - GPIO47 : I2C SDA (OLED 0x3C, SGP41 0x59, SHT40 0x44)
- *   - GPIO48 : I2C SCL
+ * Hardware Mapping (Phase 1 Plan B Carrier PCB + ESP32S3TestCode.ino):
+ *   - GPIO2        : Atomizer Control (USE_CUSTOM_PWM=0 -> Digital HIGH/LOW; 1 -> 108 kHz PWM)
+ *   - GPIO3        : 5V Aspiration Fan (HIGH = ON, LOW = OFF)
+ *   - GPIO1        : XKC-Y23A-NPN Water Level Sensor (INPUT_PULLUP, WATER_ACTIVE_LEVEL = liquid)
+ *   - GPIO5 / 6    : I2C Bus 0 (Wire)  -> Sensors SDA=GPIO5, SCL=GPIO6 (SHT40 0x44, SGP41 0x59)
+ *   - GPIO47 / 48  : I2C Bus 1 (Wire1) -> Display SDA=GPIO47, SCL=GPIO48 (SSD1306 OLED 0x3C)
  *
  * Scope Notes:
  *   - Serves JSON API only (/telemetry, /api/control) and plain-text info at /.
@@ -27,6 +27,10 @@
 #include <math.h>
 #include "config.h"
 
+#ifndef USE_CUSTOM_PWM
+#define USE_CUSTOM_PWM 0
+#endif
+
 #if !SIMULATE_VOC
 #include <SensirionI2CSgp41.h>
 #include <SensirionI2cSht4x.h>
@@ -42,13 +46,19 @@
 const int ATOMIZER_PIN      = 2;
 const int FAN_PIN           = 3;
 const int WATER_SENSOR_PIN  = 1;
-const int I2C_SDA           = 47;
-const int I2C_SCL           = 48;
 
+// Dual Hardware I2C Buses
+const int SENSOR_I2C_SDA    = 5;   // Bus 0 (Wire): SHT40 (0x44), SGP41 (0x59)
+const int SENSOR_I2C_SCL    = 6;
+const int OLED_I2C_SDA      = 47;  // Bus 1 (Wire1): SSD1306 OLED (0x3C)
+const int OLED_I2C_SCL      = 48;
+
+#if USE_CUSTOM_PWM == 1
 const uint32_t ATOMIZER_FREQ = 108000;
 const uint8_t  ATOMIZER_RES  = 8;
 const uint8_t  DUTY_50       = 128;
 const uint8_t  DUTY_OFF      = 0;
+#endif
 
 #define SCREEN_WIDTH  128
 #define SCREEN_HEIGHT 64
@@ -100,7 +110,7 @@ const uint8_t CYCLE_FAN_POST = 3;
 // ============================================================================
 // 4. Global Objects & State
 // ============================================================================
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire1, OLED_RESET);
 WebServer server(80);
 Preferences prefs;
 
@@ -263,10 +273,18 @@ const char* getPhaseStr() {
 
 void writeAtomizer(bool on) {
   if (on && powerOn && hasWater && !highVocLock) {
+#if USE_CUSTOM_PWM == 1
     ledcWrite(ATOMIZER_PIN, DUTY_50);
+#else
+    digitalWrite(ATOMIZER_PIN, HIGH);
+#endif
     isMisting = true;
   } else {
+#if USE_CUSTOM_PWM == 1
     ledcWrite(ATOMIZER_PIN, DUTY_OFF);
+#else
+    digitalWrite(ATOMIZER_PIN, LOW);
+#endif
     isMisting = false;
   }
 }
@@ -947,8 +965,15 @@ void setup() {
   // Force hardware outputs OFF before anything else
   pinMode(FAN_PIN, OUTPUT);
   digitalWrite(FAN_PIN, LOW);
-  ledcAttach(ATOMIZER_PIN, ATOMIZER_FREQ, ATOMIZER_RES);
+#if USE_CUSTOM_PWM == 1
+  if (!ledcAttach(ATOMIZER_PIN, ATOMIZER_FREQ, ATOMIZER_RES)) {
+    Serial.println("ERROR: Failed to attach PWM to Atomizer Pin!");
+  }
   ledcWrite(ATOMIZER_PIN, DUTY_OFF);
+#else
+  pinMode(ATOMIZER_PIN, OUTPUT);
+  digitalWrite(ATOMIZER_PIN, LOW);
+#endif
 
   pinMode(WATER_SENSOR_PIN, INPUT_PULLUP);
   hasWater = (digitalRead(WATER_SENSOR_PIN) == WATER_ACTIVE_LEVEL);
@@ -958,8 +983,10 @@ void setup() {
 
   loadPreferences();
 
-  Wire.begin(I2C_SDA, I2C_SCL);
-  if (display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS)) {
+  // Initialize Dual Hardware I2C Buses
+  Wire.begin(SENSOR_I2C_SDA, SENSOR_I2C_SCL);   // Bus 0: SHT40 (0x44) & SGP41 (0x59)
+  Wire1.begin(OLED_I2C_SDA, OLED_I2C_SCL);      // Bus 1: SSD1306 OLED (0x3C)
+  if (display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS, true, false)) {
     oledReady = true;
     display.clearDisplay();
     display.setTextSize(1);

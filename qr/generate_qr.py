@@ -18,7 +18,7 @@ def get_local_ip():
         s.close()
         return ip
     except Exception:
-        return "192.168.1.10" # Fallback IPv4 if offline; replace with your laptop IPv4
+        return "192.168.254.105" # Fallback IPv4 if offline; replace with your laptop IPv4
 
 # -------------------------------------------------------------------------
 # Server Configuration (Must match your actual web server host/port/path!)

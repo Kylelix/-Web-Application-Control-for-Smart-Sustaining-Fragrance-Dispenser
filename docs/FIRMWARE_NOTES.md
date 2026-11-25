@@ -1,7 +1,7 @@
 # SmartScent ESP32-S3 Firmware v2 Notes
 
 Firmware location: `firmware/ESP32S3_Fragrance_V2/ESP32S3_Fragrance_V2.ino`  
-Original reference sketch (kept untouched): `ESP32S3TestCode/ESP32S3TestCode.ino`
+Original reference sketch (kept untouched): `firmware/ESP32S3TestCode/ESP32S3TestCode.ino`
 
 ---
 

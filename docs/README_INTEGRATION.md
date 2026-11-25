@@ -21,15 +21,15 @@ Browsers **never** contact the ESP32 directly. This guarantees server-side room/
 ## 2. Web Server Setup (Use XAMPP Apache)
 - **Important:** Serve the site with **XAMPP Apache** (multi-threaded) — copy or symlink this folder to `C:\xampp\htdocs\smartscent`.
 - Single-threaded `php -S` on Windows blocks parallel browser requests if a device is offline or timing out. If you use `php -S` anyway for quick local debug, keep cURL timeouts short (already configured in `config.php`: 800 ms connect / 1500 ms total).
-- Remember to keep `PORT` and `BASE_PATH` in `generate_qr.py` aligned with your real web server URL before generating printable QR cards.
+- Remember to keep `PORT` and `BASE_PATH` in `qr/generate_qr.py` aligned with your real web server URL before generating printable QR cards.
 
 ---
 
 ## 3. Database Setup (SSMS)
 Run these scripts in **SQL Server Management Studio (SSMS)** in exact order:
-1. `smartscent_db_setup.sql` (if fresh install)
-2. `qr_room_upgrade.sql`
-3. `hardware_integration_upgrade.sql` — creates `devices` and `activity_log` and seeds:
+1. `sql/smartscent_db_setup.sql` (if fresh install)
+2. `sql/qr_room_upgrade.sql`
+3. `sql/hardware_integration_upgrade.sql` — creates `devices` and `activity_log` and seeds:
    - `SFD-01` -> Room `101` (`192.168.1.15`)
    - `SFD-02` -> Room `102` (`192.168.1.16`)
 

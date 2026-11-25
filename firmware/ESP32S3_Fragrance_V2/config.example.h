@@ -37,4 +37,9 @@
 // HIGH = liquid detected when pin reads HIGH; flip to LOW if wired active-low.
 #define WATER_ACTIVE_LEVEL   HIGH
 
+// Atomizer driver mode on GPIO2:
+//   0 = Phase 1 Plan B (COTS Blue Atomizer Module, steady Digital HIGH/LOW)
+//   1 = Phase 2 Custom V4 Driver (108 kHz LEDC PWM, 50% duty)
+#define USE_CUSTOM_PWM       0
+
 #endif // SMARTSCENT_CONFIG_H
