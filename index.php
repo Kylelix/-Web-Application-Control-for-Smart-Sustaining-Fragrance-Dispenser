@@ -247,13 +247,13 @@ if ($conn === false) {
           <?php if (!$isAdmin): ?>
             <div class="client-notice">
               <i class="fa-solid fa-circle-info"></i>
-              <span>Guests control their own room's misting; other settings are managed by the administrator.</span>
+              <span>Guests can control their own room's power, operating mode, dose profile, interval, and spray; diagnostics and system settings are managed by the administrator.</span>
             </div>
           <?php endif; ?>
 
-          <!-- Operating mode (Admin only) -->
+          <!-- Operating mode (Admin + Client) -->
           <div class="control-section" id="modeControlGroup">
-            <span class="field-label">Operating mode <?= !$isAdmin ? '<small>(Admin Only)</small>' : '' ?></span>
+            <span class="field-label">Operating mode</span>
             <div class="segmented" data-group="mode">
               <button type="button" data-mode="MANUAL">Manual</button>
               <button type="button" data-mode="TIMED">Time-Based</button>
@@ -277,9 +277,9 @@ if ($conn === false) {
             </div>
           </div>
 
-          <!-- Time-based interval (Admin only) -->
+          <!-- Time-based interval (Admin + Client) -->
           <div class="control-section" id="intervalControlGroup">
-            <span class="field-label">Time-based interval <?= !$isAdmin ? '<small>(Admin Only)</small>' : '' ?></span>
+            <span class="field-label">Time-based interval</span>
             <div class="segmented small" data-group="interval">
               <button type="button" data-minutes="30">30 min</button>
               <button type="button" data-minutes="60">1 hour</button>

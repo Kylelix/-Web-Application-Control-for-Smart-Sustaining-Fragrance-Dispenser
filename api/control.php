@@ -75,7 +75,7 @@ if (!$isAdmin) {
 session_write_close();
 
 $allCommands   = ['POWER', 'SET_MODE', 'SET_PROFILE', 'SET_INTERVAL', 'SPRAY_NOW', 'FAN', 'SET_BASELINE'];
-$clientAllowed = ['POWER', 'SET_PROFILE', 'SPRAY_NOW'];
+$clientAllowed = ['POWER', 'SET_MODE', 'SET_PROFILE', 'SET_INTERVAL', 'SPRAY_NOW'];
 
 $command = strtoupper(trim((string)($input['command'] ?? '')));
 if (!in_array($command, $allCommands, true)) {
