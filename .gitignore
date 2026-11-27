@@ -1,6 +1,9 @@
 # Local secrets & per-device configuration
 firmware/ESP32S3_Fragrance_V2/config.h
 
+# Generated QR PNGs (each PC regenerates for its own Wi-Fi IP)
+qr/qr_room_*.png
+
 # Runtime telemetry cache & lock files
 cache/*.json
 cache/*.lock
